@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>WhatsApp Gateway</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#0d1117;--bg2:#161b22;--bg3:#21262d;
+      --border:#30363d;--green:#25D366;--green2:#128C7E;
+      --text:#e6edf3;--muted:#8b949e;--red:#f85149;--amber:#f0883e;
+      --radius:12px
+    }
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+      background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6}
+    .header{background:var(--bg2);border-bottom:1px solid var(--border);
+      padding:18px 32px;display:flex;align-items:center;gap:14px}
+    .header-logo{width:40px;height:40px;border-radius:50%;background:var(--green);
+      display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+    .header h1{font-size:20px;font-weight:700}
+    .header p{font-size:13px;color:var(--muted)}
+    .status-pill{margin-left:auto;padding:5px 14px;border-radius:100px;font-size:12px;
+      font-weight:700;letter-spacing:.5px;white-space:nowrap}
+    .pill-connected{background:rgba(37,211,102,.15);color:var(--green);border:1px solid rgba(37,211,102,.35)}
+    .pill-waiting{background:rgba(240,136,62,.12);color:var(--amber);border:1px solid rgba(240,136,62,.3)}
+    .pill-disconnected{background:rgba(248,81,73,.12);color:var(--red);border:1px solid rgba(248,81,73,.3)}
+
+    .main{max-width:1200px;margin:0 auto;padding:32px 24px;
+      display:grid;grid-template-columns:380px 1fr;gap:28px;align-items:start}
+    @media(max-width:900px){.main{grid-template-columns:1fr}}
+
+    .card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:28px}
+    .card-title{font-size:14px;font-weight:700;color:var(--muted);
+      text-transform:uppercase;letter-spacing:1px;margin-bottom:20px}
+
+    .qr-box{display:flex;flex-direction:column;align-items:center;gap:18px}
+    .qr-img-wrap{width:260px;height:260px;background:var(--bg3);border-radius:12px;
+      border:2px solid var(--border);display:flex;align-items:center;justify-content:center;
+      overflow:hidden;position:relative}
+    .qr-img-wrap img{width:100%;height:100%;border-radius:10px}
+    .qr-placeholder{text-align:center;padding:24px;color:var(--muted)}
+    .qr-placeholder .spinner{width:40px;height:40px;border:3px solid var(--border);
+      border-top-color:var(--green);border-radius:50%;animation:spin .9s linear infinite;
+      margin:0 auto 12px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .qr-msg{font-size:13px;color:var(--muted);text-align:center;max-width:260px}
+    .qr-meta{font-size:11px;color:var(--muted);text-align:center;opacity:.7;line-height:1.8}
+    .qr-countdown{font-size:13px;font-weight:700;text-align:center;
+      color:var(--amber);margin-top:2px}
+
+    .connected-box{text-align:center;padding:20px 0}
+    .connected-icon{font-size:56px;margin-bottom:12px}
+    .connected-box h3{font-size:18px;font-weight:700;color:var(--green);margin-bottom:6px}
+    .connected-box p{font-size:13px;color:var(--muted)}
+
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;
+      border-radius:8px;font-size:14px;font-weight:600;border:none;cursor:pointer;
+      text-decoration:none;transition:opacity .2s,transform .15s;font-family:inherit}
+    .btn:hover{opacity:.88;transform:translateY(-1px)}
+    .btn-green{background:var(--green);color:#fff}
+    .btn-ghost{background:var(--bg3);color:var(--text);border:1px solid var(--border)}
+    .btn-red{background:var(--red);color:#fff}
+    .btn-sm{padding:8px 14px;font-size:13px}
+    .btn-block{width:100%;justify-content:center}
+
+    .steps{display:flex;flex-direction:column;gap:10px;margin:16px 0}
+    .step{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;
+      background:var(--bg3);border-radius:8px}
+    .step-num{width:24px;height:24px;border-radius:50%;background:var(--green);
+      color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;
+      justify-content:center;flex-shrink:0;margin-top:1px}
+    .step-text{font-size:13px;color:var(--text)}
+    .step-text strong{color:var(--text);display:block;margin-bottom:2px}
+    .step-text span{color:var(--muted);font-size:12px}
+
+    .tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:24px}
+    .tab{padding:10px 18px;font-size:13px;font-weight:600;cursor:pointer;
+      border-bottom:2px solid transparent;color:var(--muted);transition:color .2s;
+      background:none;border-top:none;border-left:none;border-right:none;font-family:inherit}
+    .tab.active{color:var(--green);border-bottom-color:var(--green)}
+    .tab-panel{display:none}
+    .tab-panel.active{display:block}
+
+    .form-group{margin-bottom:16px}
+    .form-group label{display:block;font-size:12px;font-weight:600;color:var(--muted);
+      margin-bottom:7px;text-transform:uppercase;letter-spacing:.5px}
+    .form-group input,.form-group textarea{width:100%;padding:11px 14px;
+      background:var(--bg3);border:1.5px solid var(--border);border-radius:8px;
+      color:var(--text);font-size:14px;font-family:inherit;outline:none;
+      transition:border-color .2s}
+    .form-group input:focus,.form-group textarea:focus{border-color:var(--green)}
+    .form-group textarea{resize:vertical;min-height:90px}
+    .form-group input::placeholder,.form-group textarea::placeholder{color:var(--muted)}
+    .form-hint{font-size:11px;color:var(--muted);margin-top:5px}
+
+    .endpoint{background:var(--bg3);border:1px solid var(--border);border-radius:8px;
+      margin-bottom:14px;overflow:hidden}
+    .ep-header{display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;
+      user-select:none}
+    .method{font-size:11px;font-weight:800;padding:3px 8px;border-radius:4px;
+      letter-spacing:.5px;flex-shrink:0}
+    .m-get{background:rgba(56,189,125,.15);color:#3dba7d}
+    .m-post{background:rgba(240,136,62,.15);color:var(--amber)}
+    .ep-url{font-family:'SF Mono',Consolas,monospace;font-size:13px;font-weight:600;color:var(--text)}
+    .ep-desc{font-size:12px;color:var(--muted);margin-left:auto}
+    .ep-body{padding:0 16px 16px;display:none}
+    .ep-body.open{display:block}
+    pre{background:var(--bg);border:1px solid var(--border);border-radius:8px;
+      padding:14px;overflow-x:auto;font-size:12px;font-family:'SF Mono',Consolas,monospace;
+      line-height:1.6;color:#e6edf3;margin-top:10px;white-space:pre-wrap;word-break:break-all}
+    .key{color:#79c0ff}.str{color:#a5d6ff}.num{color:#f2cc60}.bool{color:#ff7b72}
+
+    .result{background:var(--bg3);border-radius:8px;padding:14px;font-size:13px;
+      margin-top:14px;display:none}
+    .result.ok{border-left:3px solid var(--green);display:block}
+    .result.err{border-left:3px solid var(--red);display:block}
+
+    /* Live log panel */
+    .log-panel{background:var(--bg);border:1px solid var(--border);border-radius:8px;
+      height:280px;overflow-y:auto;padding:12px;font-size:11px;
+      font-family:'SF Mono',Consolas,monospace;color:#8b949e;line-height:1.7;
+      scroll-behavior:smooth}
+    .log-panel .log-line{white-space:pre-wrap;word-break:break-all;margin-bottom:2px}
+    .log-panel .log-line.err{color:var(--red)}
+    .log-panel .log-line.ok{color:var(--green)}
+    .log-panel .log-line.warn{color:var(--amber)}
+    .log-header{display:flex;align-items:center;justify-content:space-between;
+      margin-bottom:10px}
+    .log-dot{width:8px;height:8px;border-radius:50%;background:var(--green);
+      animation:pulse 2s ease-in-out infinite;display:inline-block;margin-right:6px}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+    .toast{position:fixed;bottom:24px;right:24px;background:var(--bg2);
+      border:1px solid var(--border);border-radius:10px;padding:14px 20px;
+      font-size:13px;box-shadow:0 8px 32px rgba(0,0,0,.5);opacity:0;
+      transform:translateY(12px);transition:opacity .3s,transform .3s;z-index:999}
+    .toast.show{opacity:1;transform:translateY(0)}
+    .toast.green{border-left:3px solid var(--green)}
+    .toast.red{border-left:3px solid var(--red)}
+    code{font-family:'SF Mono',Consolas,monospace;background:var(--bg3);
+      padding:2px 7px;border-radius:4px;font-size:12px;color:var(--amber)}
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">💬</div>
+  <div>
+    <h1>WhatsApp Gateway</h1>
+    <p>Scan once — send messages via REST API from anywhere</p>
+  </div>
+  <div class="status-pill pill-waiting" id="statusPill">Checking...</div>
+</div>
+
+<div class="main">
+
+  <!-- Left column -->
+  <div>
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-title">Connection</div>
+
+      <!-- QR panel -->
+      <div class="qr-box" id="qrPanel">
+        <div class="qr-img-wrap">
+          <div class="qr-placeholder" id="qrPlaceholder">
+            <div class="spinner"></div>
+            <div>Loading QR...</div>
+          </div>
+          <img id="qrImg" style="display:none" alt="WhatsApp QR Code"/>
+        </div>
+        <div class="qr-msg">Open WhatsApp → 3-dot menu → Linked Devices → Link a Device → scan this QR</div>
+        <div class="qr-meta" id="qrMeta">Waiting for QR...</div>
+        <div class="qr-countdown" id="qrCountdown"></div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-ghost btn-sm" onclick="forceRefreshQR()">↻ Refresh QR</button>
+          <button class="btn btn-ghost btn-sm" onclick="reconnect()">⟳ Reconnect</button>
+        </div>
+      </div>
+
+      <!-- Connected panel -->
+      <div class="connected-box" id="connectedPanel" style="display:none">
+        <div class="connected-icon">✅</div>
+        <h3>WhatsApp Connected</h3>
+        <p id="connectedPhone">Ready to send messages</p>
+        <div style="margin-top:20px;display:flex;gap:10px;justify-content:center">
+          <button class="btn btn-ghost btn-sm" onclick="copyCmd()">📋 Copy cURL</button>
+          <button class="btn btn-red btn-sm" onclick="logout()">Logout</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-title">How It Works</div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-text">
+            <strong>Scan QR Code above</strong>
+            <span>WhatsApp → 3-dot → Linked Devices → Link a Device</span>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-text">
+            <strong>Session Saved Permanently</strong>
+            <span>Scan only once. Session stored on server.</span>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-text">
+            <strong>Send via REST API</strong>
+            <span>POST /api/send — from Postman, cURL, or any code</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Logs -->
+    <div class="card">
+      <div class="log-header">
+        <div class="card-title" style="margin-bottom:0">
+          <span class="log-dot" id="sseIndicator"></span>Live Debug Logs
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="clearLogs()" style="font-size:11px;padding:4px 10px">Clear</button>
+      </div>
+      <div class="log-panel" id="logPanel"></div>
+    </div>
+  </div>
+
+  <!-- Right column -->
+  <div>
+    <div class="card">
+      <div class="tabs">
+        <button class="tab active" onclick="showTab('send',event)">Send Message</button>
+        <button class="tab" onclick="showTab('bulk',event)">Bulk Send</button>
+        <button class="tab" onclick="showTab('docs',event)">API Docs</button>
+      </div>
+
+      <!-- Send -->
+      <div class="tab-panel active" id="tab-send">
+        <div class="form-group">
+          <label>Phone Number</label>
+          <input type="tel" id="sendTo" placeholder="923001234567 (country code, no + or spaces)"/>
+          <div class="form-hint">92 = Pakistan · 1 = USA · 44 = UK</div>
+        </div>
+        <div class="form-group">
+          <label>Message</label>
+          <textarea id="sendMsg" placeholder="Type your message here..."></textarea>
+        </div>
+        <button class="btn btn-green btn-block" id="sendBtn" onclick="sendMsg()">Send Message →</button>
+        <div class="result" id="sendResult"></div>
+        <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border)">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:10px;font-weight:600">cURL EQUIVALENT</div>
+          <pre id="curlExample"></pre>
+        </div>
+      </div>
+
+      <!-- Bulk -->
+      <div class="tab-panel" id="tab-bulk">
+        <div class="form-group">
+          <label>Phone Numbers (one per line)</label>
+          <textarea id="bulkNums" rows="5" placeholder="923001234567&#10;923009876543&#10;14155551234"></textarea>
+          <div class="form-hint">One number per line. Include country code, no + or spaces.</div>
+        </div>
+        <div class="form-group">
+          <label>Message</label>
+          <textarea id="bulkMsg" placeholder="Your message to all recipients..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Delay Between Sends (ms)</label>
+          <input type="number" id="bulkDelay" value="2000" min="500"/>
+          <div class="form-hint">Minimum 500ms. 2000ms recommended to avoid rate limits.</div>
+        </div>
+        <button class="btn btn-green btn-block" id="bulkBtn" onclick="sendBulk()">Send to All →</button>
+        <div class="result" id="bulkResult"></div>
+        <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border)">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:10px;font-weight:600">cURL EQUIVALENT</div>
+          <pre>curl -X POST ${BASE_PLACEHOLDER}/api/send-bulk \
+  -H "Content-Type: application/json" \
+  -d '{
+    "numbers": ["923001234567","14155551234"],
+    "message": "Hello everyone!",
+    "delayMs": 2000
+  }'</pre>
+        </div>
+      </div>
+
+      <!-- Docs -->
+      <div class="tab-panel" id="tab-docs">
+        <p style="font-size:13px;color:var(--muted);margin-bottom:20px">
+          Base URL: <code id="baseUrl">loading...</code>
+        </p>
+
+        <div class="endpoint">
+          <div class="ep-header" onclick="toggleEp(this)">
+            <span class="method m-get">GET</span><span class="ep-url">/api/status</span>
+            <span class="ep-desc">Connection status</span>
+          </div>
+          <div class="ep-body">
+            <pre><span class="key">"state"</span>: <span class="str">"CONNECTED"</span>, <span class="key">"connected"</span>: <span class="bool">true</span>, <span class="key">"phone"</span>: <span class="str">"92300..."</span></pre>
+          </div>
+        </div>
+
+        <div class="endpoint">
+          <div class="ep-header" onclick="toggleEp(this)">
+            <span class="method m-get">GET</span><span class="ep-url">/api/qr</span>
+            <span class="ep-desc">QR code image</span>
+          </div>
+          <div class="ep-body">
+            <div style="font-size:12px;color:var(--muted)">Returns QR as base64 PNG.</div>
+            <pre><span class="key">"qr"</span>: <span class="str">"data:image/png;base64,..."</span></pre>
+          </div>
+        </div>
+
+        <div class="endpoint">
+          <div class="ep-header" onclick="toggleEp(this)">
+            <span class="method m-post">POST</span><span class="ep-url">/api/send</span>
+            <span class="ep-desc">Send message</span>
+          </div>
+          <div class="ep-body">
+            <pre>Body: { <span class="key">"to"</span>: <span class="str">"923001234567"</span>, <span class="key">"message"</span>: <span class="str">"Hello!"</span> }
+Response: { <span class="key">"success"</span>: <span class="bool">true</span>, <span class="key">"to"</span>: <span class="str">"923001234567"</span> }</pre>
+          </div>
+        </div>
+
+        <div class="endpoint">
+          <div class="ep-header" onclick="toggleEp(this)">
+            <span class="method m-post">POST</span><span class="ep-url">/api/send-bulk</span>
+            <span class="ep-desc">Bulk send</span>
+          </div>
+          <div class="ep-body">
+            <pre>Body: { <span class="key">"numbers"</span>: [<span class="str">"923001234567"</span>], <span class="key">"message"</span>: <span class="str">"Hi"</span>, <span class="key">"delayMs"</span>: <span class="num">2000</span> }</pre>
+          </div>
+        </div>
+
+        <div class="endpoint">
+          <div class="ep-header" onclick="toggleEp(this)">
+            <span class="method m-post">POST</span><span class="ep-url">/api/reconnect</span>
+            <span class="ep-desc">Restart QR flow</span>
+          </div>
+          <div class="ep-body">
+            <div style="font-size:12px;color:var(--muted)">Use if logged out. Restarts auth, get new QR.</div>
+          </div>
+        </div>
+
+        <div class="endpoint">
+          <div class="ep-header" onclick="toggleEp(this)">
+            <span class="method m-post">POST</span><span class="ep-url">/api/logout</span>
+            <span class="ep-desc">Unlink device</span>
+          </div>
+          <div class="ep-body">
+            <div style="font-size:12px;color:var(--muted)">Unlinks from WhatsApp. Need to re-scan after.</div>
+          </div>
+        </div>
+
+        <div style="margin-top:20px;padding:16px;background:var(--bg3);border-radius:8px">
+          <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:10px">POSTMAN COLLECTION</div>
+          <button class="btn btn-ghost btn-sm" onclick="downloadPostman()">⬇️ Download Postman Collection</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const BASE = window.location.origin + window.location.pathname.replace(/\/+$/, '');
+const API  = BASE;
+let isConnected = false;
+let lastQRNumber = 0;
+let lastQRTime = null;
+let countdownTimer = null;
+
+// Inject base URL
+document.getElementById('baseUrl').textContent = BASE;
+document.getElementById('curlExample').textContent =
+  `curl -X POST ${BASE}/api/send \\\n  -H "Content-Type: application/json" \\\n  -d '{"to":"923001234567","message":"Hello!"}'`;
+document.querySelector('#tab-bulk pre').textContent =
+  `curl -X POST ${BASE}/api/send-bulk \\\n  -H "Content-Type: application/json" \\\n  -d '{"numbers":["923001234567","14155551234"],"message":"Hello everyone!","delayMs":2000}'`;
+
+// ── SSE Log Stream ────────────────────────────────────────────────────────────
+const logPanel = document.getElementById('logPanel');
+let sseRetries = 0;
+
+function connectSSE() {
+  const es = new EventSource(`${API}/api/logs/stream`);
+  const indicator = document.getElementById('sseIndicator');
+
+  es.onopen = () => {
+    indicator.style.background = 'var(--green)';
+    sseRetries = 0;
+    addLog('[BROWSER] Live log stream connected', 'ok');
+  };
+  es.onmessage = (e) => {
+    const line = JSON.parse(e.data);
+    addLog(line);
+  };
+  es.onerror = () => {
+    indicator.style.background = 'var(--red)';
+    es.close();
+    sseRetries++;
+    const delay = Math.min(sseRetries * 2000, 10000);
+    setTimeout(connectSSE, delay);
+  };
+}
+
+function addLog(line, cls) {
+  const div = document.createElement('div');
+  div.className = 'log-line';
+  if (cls) div.classList.add(cls);
+  else if (/ERROR|error|failed|FAILED|!!!/.test(line)) div.classList.add('err');
+  else if (/CONNECTED|AUTH CONFIRMED|success|>>>/.test(line)) div.classList.add('ok');
+  else if (/WARNING|warn|WARN|timeout|timed out/.test(line)) div.classList.add('warn');
+  div.textContent = line;
+  logPanel.appendChild(div);
+  // keep max 150 lines in DOM
+  while (logPanel.children.length > 150) logPanel.removeChild(logPanel.firstChild);
+  logPanel.scrollTop = logPanel.scrollHeight;
+}
+
+function clearLogs() { logPanel.innerHTML = ''; }
+
+connectSSE();
+
+// ── Status polling ────────────────────────────────────────────────────────────
+async function checkStatus() {
+  try {
+    const r = await fetch(`${API}/api/status`);
+    const d = await r.json();
+    isConnected = d.connected;
+    updateUI(d);
+  } catch(e) {
+    // silent - SSE logs will show errors
+  }
+}
+
+let lastState = null;
+function updateUI(d) {
+  const pill = document.getElementById('statusPill');
+  const qrPanel = document.getElementById('qrPanel');
+  const connPanel = document.getElementById('connectedPanel');
+
+  if (d.connected) {
+    const qLabel = d.queueDepth > 0 ? ` · Queue: ${d.queueDepth}` : '';
+    pill.textContent = '● Connected' + qLabel;
+    pill.className = 'status-pill pill-connected';
+    qrPanel.style.display = 'none';
+    connPanel.style.display = 'block';
+    document.getElementById('connectedPhone').textContent =
+      d.phone ? 'Connected as: +' + d.phone : 'Session active and ready to send';
+    clearInterval(qrTimer);
+    stopCountdown();
+  } else if (d.state === 'QR_READY') {
+    pill.textContent = '⚡ Scan QR';
+    pill.className = 'status-pill pill-waiting';
+    qrPanel.style.display = 'flex';
+    connPanel.style.display = 'none';
+    // Restart QR timer if we weren't in QR state before (e.g. after disconnect)
+    if (lastState !== 'QR_READY') {
+      clearInterval(qrTimer);
+      qrTimer = setInterval(maybeRefreshQR, 8000);
+    }
+    maybeRefreshQR();
+  } else if (d.state === 'DISCONNECTED') {
+    pill.textContent = '○ Disconnected';
+    pill.className = 'status-pill pill-disconnected';
+    qrPanel.style.display = 'flex';
+    connPanel.style.display = 'none';
+    document.getElementById('qrPlaceholder').style.display = 'block';
+    document.getElementById('qrImg').style.display = 'none';
+    document.getElementById('qrMeta').textContent = 'Session lost. Click "Reconnect" to pair again.';
+    document.getElementById('qrCountdown').textContent = '';
+    stopCountdown();
+  } else {
+    pill.textContent = '○ Starting...';
+    pill.className = 'status-pill pill-disconnected';
+    qrPanel.style.display = 'flex';
+    connPanel.style.display = 'none';
+    document.getElementById('qrMeta').textContent = 'Connecting to WhatsApp...';
+  }
+  lastState = d.state;
+}
+
+// ── QR fetching ───────────────────────────────────────────────────────────────
+let qrTimer = null;
+
+async function maybeRefreshQR() {
+  try {
+    const r = await fetch(`${API}/api/qr`);
+    if (!r.ok) return;
+    const d = await r.json();
+    if (d.connected) { checkStatus(); return; }
+    if (d.qr && d.qrNumber !== lastQRNumber) {
+      lastQRNumber = d.qrNumber || 0;
+      lastQRTime = d.refreshedAt ? new Date(d.refreshedAt) : new Date();
+      const img = document.getElementById('qrImg');
+      document.getElementById('qrPlaceholder').style.display = 'none';
+      img.style.display = 'block';
+      img.src = d.qr;
+      document.getElementById('qrMeta').textContent = `QR #${d.qrNumber} — refreshed at ${lastQRTime.toLocaleTimeString()}`;
+      startCountdown();
+    }
+  } catch {}
+}
+
+async function forceRefreshQR() {
+  lastQRNumber = -1; // force update
+  await maybeRefreshQR();
+  showToast('QR refreshed', 'green');
+}
+
+// Poll QR every 8 seconds (WhatsApp rotates every ~20s)
+qrTimer = setInterval(maybeRefreshQR, 8000);
+
+// Poll status every 3 seconds
+setInterval(checkStatus, 3000);
+checkStatus();
+
+// QR countdown timer (shows how old current QR is)
+function startCountdown() {
+  stopCountdown();
+  countdownTimer = setInterval(() => {
+    if (!lastQRTime) return;
+    const ageS = Math.round((Date.now() - lastQRTime.getTime()) / 1000);
+    const el = document.getElementById('qrCountdown');
+    if (ageS < 18) {
+      el.textContent = `QR valid for ~${18 - ageS}s — scan now!`;
+      el.style.color = 'var(--green)';
+    } else if (ageS < 25) {
+      el.textContent = `QR refreshing soon... (${ageS}s old)`;
+      el.style.color = 'var(--amber)';
+    } else {
+      el.textContent = `QR auto-refreshing...`;
+      el.style.color = 'var(--muted)';
+    }
+  }, 1000);
+}
+function stopCountdown() {
+  if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
+  document.getElementById('qrCountdown').textContent = '';
+}
+
+// ── UI helpers ────────────────────────────────────────────────────────────────
+function showTab(name, e) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  if (e) e.target.classList.add('active');
+}
+function toggleEp(header) { header.nextElementSibling.classList.toggle('open'); }
+
+// ── Send message ──────────────────────────────────────────────────────────────
+async function sendMsg() {
+  const to = document.getElementById('sendTo').value.trim().replace(/[^0-9]/g,'');
+  const message = document.getElementById('sendMsg').value.trim();
+  const result = document.getElementById('sendResult');
+  if (!to || !message) { showToast('Fill in both fields.','red'); return; }
+  if (!isConnected) { showToast('WhatsApp not connected. Scan QR first.','red'); return; }
+  const btn = document.getElementById('sendBtn');
+  btn.disabled = true; btn.textContent = 'Sending...';
+  try {
+    const r = await fetch(`${API}/api/send`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({to, message})
+    });
+    const d = await r.json();
+    if (d.success) {
+      result.className = 'result ok'; result.textContent = '✅ Sent to +' + to;
+      showToast('Message sent!','green');
+      document.getElementById('sendMsg').value = '';
+    } else {
+      result.className = 'result err'; result.textContent = '❌ ' + (d.error||'Send failed');
+      showToast('Send failed','red');
+    }
+  } catch(e) {
+    result.className = 'result err'; result.textContent = '❌ ' + e.message;
+  }
+  btn.disabled = false; btn.textContent = 'Send Message →';
+}
+
+// ── Bulk send ─────────────────────────────────────────────────────────────────
+async function sendBulk() {
+  const raw = document.getElementById('bulkNums').value.trim();
+  const message = document.getElementById('bulkMsg').value.trim();
+  const delayMs = parseInt(document.getElementById('bulkDelay').value)||2000;
+  const result = document.getElementById('bulkResult');
+  const numbers = raw.split('\n').map(n=>n.trim().replace(/[^0-9]/g,'')).filter(Boolean);
+  if (!numbers.length||!message){showToast('Fill in numbers and message.','red');return;}
+  if (!isConnected){showToast('WhatsApp not connected.','red');return;}
+  const btn = document.getElementById('bulkBtn');
+  btn.disabled = true;
+  result.className = 'result ok';
+  result.textContent = `⏳ 0/${numbers.length} sent...`;
+
+  let sentCount = 0, failCount = 0;
+  const failed = [];
+
+  try {
+    const r = await fetch(`${API}/api/send-bulk`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({numbers, message, delayMs})
+    });
+    const reader = r.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '';
+    while (true) {
+      const {done, value} = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, {stream: true});
+      const lines = buf.split('\n');
+      buf = lines.pop(); // keep incomplete line
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        try {
+          const d = JSON.parse(line);
+          if (d.done) {
+            result.textContent = `✅ ${d.sent}/${d.total} delivered` + (failed.length ? `\n❌ Failed: ${failed.join(', ')}` : '');
+            showToast(`${d.sent}/${d.total} sent!`, d.sent === d.total ? 'green' : 'red');
+          } else {
+            if (d.success) sentCount++; else { failCount++; failed.push(d.to); }
+            btn.textContent = `Sending ${d.index}/${d.total}...`;
+            result.textContent = `⏳ ${sentCount} sent, ${failCount} failed (${d.index}/${d.total})...`;
+          }
+        } catch {}
+      }
+    }
+  } catch(e) {
+    result.className = 'result err'; result.textContent = '❌ '+e.message;
+  }
+  btn.disabled = false; btn.textContent = 'Send to All →';
+}
+
+// ── Reconnect ─────────────────────────────────────────────────────────────────
+async function reconnect() {
+  showToast('Reconnecting...', 'green');
+  try {
+    await fetch(`${API}/api/reconnect`, {method:'POST'});
+    lastQRNumber = -1; // force QR refresh
+    checkStatus();
+  } catch(e) { showToast('Reconnect failed: '+e.message, 'red'); }
+}
+
+// ── Logout ────────────────────────────────────────────────────────────────────
+async function logout() {
+  if (!confirm('Logout from WhatsApp? You will need to scan QR again.')) return;
+  await fetch(`${API}/api/logout`, {method:'POST'});
+  showToast('Logged out. Reloading...','red');
+  setTimeout(()=>location.reload(), 2000);
+}
+function copyCmd() {
+  const cmd = `curl -X POST ${BASE}/api/send -H "Content-Type: application/json" -d '{"to":"923001234567","message":"Hello!"}'`;
+  navigator.clipboard.writeText(cmd).then(()=>showToast('Copied!','green'));
+}
+function downloadPostman() {
+  const col = {
+    info:{name:"WhatsApp Gateway",schema:"https://schema.getpostman.com/json/collection/v2.1.0/collection.json"},
+    item:[
+      {name:"Status",request:{method:"GET",url:{raw:BASE+"/api/status"}}},
+      {name:"Get QR",request:{method:"GET",url:{raw:BASE+"/api/qr"}}},
+      {name:"Send Message",request:{method:"POST",url:{raw:BASE+"/api/send"},
+        header:[{key:"Content-Type",value:"application/json"}],
+        body:{mode:"raw",raw:JSON.stringify({to:"923001234567",message:"Hello!"},null,2)}}},
+      {name:"Send Bulk",request:{method:"POST",url:{raw:BASE+"/api/send-bulk"},
+        header:[{key:"Content-Type",value:"application/json"}],
+        body:{mode:"raw",raw:JSON.stringify({numbers:["923001234567"],message:"Hi!",delayMs:2000},null,2)}}},
+      {name:"Reconnect",request:{method:"POST",url:{raw:BASE+"/api/reconnect"}}},
+      {name:"Logout",request:{method:"POST",url:{raw:BASE+"/api/logout"}}}
+    ]
+  };
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(col,null,2)],{type:'application/json'}));
+  a.download = 'whatsapp-gateway.postman_collection.json';
+  a.click();
+}
+function showToast(msg, type='green') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show '+type;
+  setTimeout(()=>{ t.className='toast'; }, 3500);
+}
+</script>
+</body>
+</html>

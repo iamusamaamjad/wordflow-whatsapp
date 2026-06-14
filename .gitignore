@@ -1,0 +1,7 @@
+gateway/node_modules/
+gateway/package-lock.json
+ecosystem.config.js
+wacli-data/
+*.log
+.env
+.DS_Store
