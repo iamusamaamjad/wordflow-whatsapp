@@ -1,6 +1,6 @@
 # 📱 WhatsApp Gateway
 
-> **Apne WhatsApp number ko REST API mein convert karo — ek baar QR scan karo, phir kahi se bhi messages bhejo.**
+> **Turn your WhatsApp number into a REST API — scan QR once, send messages from anywhere.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Node.js](https://img.shields.io/badge/Node.js-18%2B-brightgreen)](https://nodejs.org)
@@ -8,51 +8,51 @@
 
 ---
 
-## ✨ Kya Karta Hai?
+## ✨ What Does It Do?
 
-Yeh project aapke WhatsApp number ko ek REST API mein convert karta hai. Ek baar QR code scan karo — phir apni website, app, ya kisi bhi tool se WhatsApp messages bhejo.
+This project converts your WhatsApp number into a REST API. Scan the QR code once — then send WhatsApp messages from your website, app, automation tool, or any HTTP client.
 
 ```
-Aapki App  →  POST /api/send  →  Gateway  →  WhatsApp
+Your App  →  POST /api/send  →  Gateway  →  WhatsApp
 ```
 
 ---
 
-## 🚀 5 Minute Setup
+## 🚀 5-Minute Setup
 
-### Step 1 — Clone karo
+### Step 1 — Clone the repository
 
 ```bash
 git clone https://github.com/iamusamaamjad/wordflow-whatsapp.git
 cd wordflow-whatsapp
 ```
 
-### Step 2 — Setup run karo
+### Step 2 — Run the setup script
 
 ```bash
 bash setup.sh
 ```
 
-Yeh script automatically install karti hai:
+The script automatically installs everything:
 - ✅ Docker
 - ✅ Node.js
 - ✅ PM2 (process manager)
-- ✅ wacli (WhatsApp engine)
+- ✅ wacli (WhatsApp engine — built from source)
 
-### Step 3 — QR Scan karo
+### Step 3 — Scan the QR code
 
-Browser mein kholo: **http://localhost:3095**
+Open in your browser: **http://localhost:3095**
 
-1. WhatsApp mobile app kholo
-2. 3-dot menu → **Linked Devices** → **Link a Device**
-3. QR code scan karo
-4. ✅ Connected! Ab aapka WhatsApp number API ready hai
+1. Open WhatsApp on your phone
+2. Tap **3-dot menu** → **Linked Devices** → **Link a Device**
+3. Scan the QR code shown on screen
+4. ✅ Connected! Your WhatsApp number is now an API
 
 ---
 
-## 🔑 Apni API Use Karna
+## 🔑 Using Your API
 
-Gateway connect hone ke baad, aap apne server URL se messages bhej sakte hain.
+Once connected, use your server URL to send messages from anywhere.
 
 ### Base URL
 
@@ -60,21 +60,21 @@ Gateway connect hone ke baad, aap apne server URL se messages bhej sakte hain.
 http://YOUR_SERVER_IP:3095
 ```
 
-Ya agar domain pe deploy kiya hai:
+Or if deployed with a domain:
 ```
 https://yourdomain.com/whatsapp
 ```
 
 ---
 
-### 📨 Single Message Bhejna
+### 📨 Send a Single Message
 
 ```bash
 curl -X POST http://localhost:3095/api/send \
   -H "Content-Type: application/json" \
   -d '{
     "to": "923001234567",
-    "message": "Hello! Yeh message WhatsApp Gateway se aaya hai."
+    "message": "Hello! This message was sent via WhatsApp Gateway."
   }'
 ```
 
@@ -83,16 +83,16 @@ curl -X POST http://localhost:3095/api/send \
 {
   "success": true,
   "to": "923001234567",
-  "message": "Hello! Yeh message WhatsApp Gateway se aaya hai."
+  "message": "Hello! This message was sent via WhatsApp Gateway."
 }
 ```
 
-> **Number format:** Country code + number, koi `+` ya spaces nahi  
+> **Phone number format:** Country code + number, no `+` or spaces  
 > Pakistan: `923001234567` | USA: `14155551234` | UK: `447911123456`
 
 ---
 
-### 📨 Bulk Messages (Multiple Numbers)
+### 📨 Send Bulk Messages
 
 ```bash
 curl -X POST http://localhost:3095/api/send-bulk \
@@ -103,13 +103,13 @@ curl -X POST http://localhost:3095/api/send-bulk \
       "923009876543",
       "14155551234"
     ],
-    "message": "Yeh bulk message hai sabke liye!",
+    "message": "Hello everyone! This is a bulk message.",
     "delayMs": 2000
   }'
 ```
 
-Bulk send **real-time progress** deta hai — har message ke baad update aata hai:
-```
+Bulk send streams **real-time progress** — you get an update after every message:
+```json
 {"to":"923001234567","success":true,"index":1,"total":3}
 {"to":"923009876543","success":true,"index":2,"total":3}
 {"to":"14155551234","success":true,"index":3,"total":3}
@@ -118,7 +118,7 @@ Bulk send **real-time progress** deta hai — har message ke baad update aata ha
 
 ---
 
-### 📊 Connection Status Check
+### 📊 Check Connection Status
 
 ```bash
 curl http://localhost:3095/api/status
@@ -141,12 +141,12 @@ curl http://localhost:3095/api/status
 |--------|----------|-------------|
 | `GET` | `/api/status` | Connection state, phone number, queue depth |
 | `GET` | `/api/qr` | QR code image (base64 PNG) |
-| `POST` | `/api/send` | Single message bhejna |
-| `POST` | `/api/send-bulk` | Multiple numbers pe bulk send (streaming) |
-| `POST` | `/api/reconnect` | Session disconnect ho jaye to reconnect |
-| `POST` | `/api/logout` | WhatsApp unlink karna |
-| `GET` | `/api/logs` | Server logs (last 100 lines) |
-| `GET` | `/api/logs/stream` | Live logs stream (SSE) |
+| `POST` | `/api/send` | Send a single message |
+| `POST` | `/api/send-bulk` | Bulk send to multiple numbers (streaming progress) |
+| `POST` | `/api/reconnect` | Reconnect if session is lost |
+| `POST` | `/api/logout` | Unlink the WhatsApp device |
+| `GET` | `/api/logs` | Last 100 server log lines |
+| `GET` | `/api/logs/stream` | Live log stream (Server-Sent Events) |
 
 ---
 
@@ -155,7 +155,7 @@ curl http://localhost:3095/api/status
 ### JavaScript / Node.js
 
 ```javascript
-// Single message
+// Send a single message
 const response = await fetch('http://localhost:3095/api/send', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
@@ -173,12 +173,11 @@ console.log(result); // { success: true, to: '923001234567' }
 ```python
 import requests
 
-# Single message
-r = requests.post('http://localhost:3095/api/send', json={
+response = requests.post('http://localhost:3095/api/send', json={
     'to': '923001234567',
     'message': 'Hello from Python!'
 })
-print(r.json())  # {'success': True, 'to': '923001234567'}
+print(response.json())  # {'success': True, 'to': '923001234567'}
 ```
 
 ### PHP
@@ -187,18 +186,19 @@ print(r.json())  # {'success': True, 'to': '923001234567'}
 $ch = curl_init('http://localhost:3095/api/send');
 curl_setopt($ch, CURLOPT_POST, 1);
 curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
-    'to' => '923001234567',
+    'to'      => '923001234567',
     'message' => 'Hello from PHP!'
 ]));
 curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 $result = json_decode(curl_exec($ch), true);
+print_r($result);
 ```
 
 ### n8n / Make / Zapier
 
-HTTP Request node use karo:
-- **Method:** POST
+Use an **HTTP Request** node:
+- **Method:** `POST`
 - **URL:** `http://YOUR_IP:3095/api/send`
 - **Body (JSON):** `{"to": "923001234567", "message": "Hello!"}`
 
@@ -206,7 +206,7 @@ HTTP Request node use karo:
 
 ## ⚙️ Environment Variables
 
-Setup ko customize karne ke liye:
+Customize the setup with environment variables:
 
 ```bash
 WA_PORT=8080 \
@@ -217,16 +217,16 @@ bash setup.sh
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `WA_PORT` | `3095` | Server port |
-| `WA_DATA_DIR` | `~/wacli-data` | WhatsApp session storage folder |
+| `WA_PORT` | `3095` | Port the server listens on |
+| `WA_DATA_DIR` | `~/wacli-data` | WhatsApp session storage directory |
 | `WA_PM2_NAME` | `whatsapp-gateway` | PM2 process name |
 | `WA_IMAGE` | `wacli` | Docker image name |
 
 ---
 
-## 🌐 Domain Pe Deploy Karna (Nginx)
+## 🌐 Deploy Behind Nginx
 
-Agar aap `https://yoursite.com/whatsapp` pe run karna chahte hain:
+To serve the gateway at `https://yoursite.com/whatsapp`:
 
 ```nginx
 location = /whatsapp { return 301 /whatsapp/; }
@@ -235,7 +235,7 @@ location /whatsapp/ {
     proxy_http_version 1.1;
     proxy_set_header Host $host;
     proxy_set_header Connection '';
-    # SSE aur bulk streaming ke liye zaroori
+    # Required for SSE (live logs) and NDJSON streaming (bulk send progress)
     proxy_buffering off;
     proxy_cache off;
     proxy_read_timeout 300s;
@@ -247,19 +247,19 @@ location /whatsapp/ {
 ## 🔄 Useful Commands
 
 ```bash
-# Gateway status dekho
+# Check gateway status
 pm2 status
 
-# Live logs dekho
+# View live logs
 pm2 logs whatsapp-gateway
 
-# Restart karo
+# Restart the gateway
 pm2 restart whatsapp-gateway
 
-# Stop karo
+# Stop the gateway
 pm2 stop whatsapp-gateway
 
-# wacli image rebuild karo (update ke liye)
+# Rebuild wacli Docker image (to get updates)
 docker rmi wacli && bash setup.sh
 ```
 
@@ -267,24 +267,24 @@ docker rmi wacli && bash setup.sh
 
 ## ❓ Troubleshooting
 
-**QR show nahi ho raha?**
+**QR code not showing?**
 ```bash
 pm2 logs whatsapp-gateway --lines 50
 ```
-Docker chal raha hai? `docker ps` se check karo.
+Make sure Docker is running: `docker ps`
 
-**Message send nahi ho raha?**
+**Messages not sending?**
 ```bash
 curl http://localhost:3095/api/status
-# state "CONNECTED" hona chahiye
+# "state" should be "CONNECTED"
 ```
-Agar disconnect hai to UI mein "Reconnect" button dabao.
+If disconnected, click the **Reconnect** button in the web UI.
 
-**Session baar baar disconnect hota hai?**  
-WhatsApp pe jao → Linked Devices → check karo ke device listed hai ya nahi. Agar nahi hai to dubara QR scan karo.
+**Session keeps disconnecting?**  
+On your phone, go to WhatsApp → Linked Devices and check that the device is still listed. If not, scan the QR code again.
 
-**macOS pe Docker nahi chal raha?**  
-[Docker Desktop](https://www.docker.com/products/docker-desktop/) install karo, phir `bash setup.sh` chalao.
+**Docker not running on macOS?**  
+Install [Docker Desktop](https://www.docker.com/products/docker-desktop/) first, then run `bash setup.sh`.
 
 ---
 
@@ -292,12 +292,12 @@ WhatsApp pe jao → Linked Devices → check karo ke device listed hai ya nahi. 
 
 ```
 wordflow-whatsapp/
-├── setup.sh              ← One-command installer
+├── setup.sh              ← One-command installer (Linux & macOS)
 ├── gateway/
 │   ├── server.js         ← Express API server
 │   ├── package.json
 │   └── public/
-│       └── index.html    ← Web UI (QR scan + send + logs)
+│       └── index.html    ← Web UI (QR scan, send tester, live logs)
 └── README.md
 ```
 
@@ -306,28 +306,29 @@ wordflow-whatsapp/
 ## 🛠️ How It Works
 
 ```
-┌─────────────┐     POST /api/send      ┌─────────────────┐
-│  Your App   │ ──────────────────────► │  Gateway        │
-│  (any lang) │                         │  (Node.js)      │
-└─────────────┘                         │                 │
-                                        │  sendQueue      │ ← No race conditions
-                                        │  (serialized)   │
-                                        └────────┬────────┘
-                                                 │  docker run wacli send
-                                        ┌────────▼────────┐
-                                        │  wacli          │ ← WhatsApp protocol
-                                        │  (Docker)       │
-                                        └────────┬────────┘
-                                                 │
-                                        ┌────────▼────────┐
-                                        │  WhatsApp       │
-                                        │  Servers        │
-                                        └─────────────────┘
+┌─────────────┐    POST /api/send     ┌──────────────────┐
+│  Your App   │ ────────────────────► │  Gateway         │
+│  (any lang) │                       │  (Node.js)       │
+└─────────────┘                       │                  │
+                                      │  Send Queue      │ ← Serialized, no conflicts
+                                      └────────┬─────────┘
+                                               │  docker run wacli send
+                                      ┌────────▼─────────┐
+                                      │  wacli           │ ← WhatsApp protocol
+                                      │  (Docker)        │
+                                      └────────┬─────────┘
+                                               │
+                                      ┌────────▼─────────┐
+                                      │  WhatsApp        │
+                                      │  Servers         │
+                                      └──────────────────┘
 ```
 
-- **Session storage:** `WA_DATA_DIR` folder mein — ek baar scan, hamesha connected
-- **Queue system:** Sab sends ek serial queue se guzarte hain — koi conflict nahi
-- **Auto-reconnect:** Send fail hone pe automatically session check aur restart
+**Key design decisions:**
+- **Session persistence** — stored in `WA_DATA_DIR`, survives server restarts
+- **Send queue** — all messages pass through a serial Promise queue, eliminating race conditions
+- **Auto-reconnect** — session loss detected from send errors, auth restarts automatically
+- **Zero polling overhead** — health check skips Docker calls when already connected (runs every 5 min only when disconnected)
 
 ---
 
